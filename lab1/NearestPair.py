@@ -1,23 +1,28 @@
-import math 
+import math
+
 
 class Point(object):
-    def __init__(self,x,y):
+    def __init__(self, x, y):
         self.x = float(x)
         self.y = float(y)
+
 
 def dis(p,q):
     xtmp = (p.x - q.x)*(p.x - q.x)
     ytmp = (p.y - q.y)*(p.y - q.y)
     return math.sqrt(xtmp + ytmp)
 
+
 def cmp(p,q):
-    if p.x!=q.x:
+    if p.x != q.x:
         return p.x - q.x
     else:
         return p.y - q.y
 
+
 INF = 100000000
 PointArray = []
+
 
 def NearestPair(left, right):
     d = INF
@@ -49,14 +54,34 @@ def NearestPair(left, right):
                     p1 = SeamArray[j]
                     p2 = SeamArray[i]
                     d = distance
-                    #print("distance",distance)
-    return p1,p2,d
+                    # print("distance",distance)
+    return p1, p2, d
 
-n=int(input("点总数n："))
-for i in range(n):
-    x = input("第{}个点的x坐标:".format(i + 1))
-    y = input("第{}个点的y坐标:".format(i + 1))
-    PointArray.append(Point(x,y))
-PointArray.sort(key=lambda p:p.x)
-p1,p2,d=NearestPair(0,n-1)
-print("最近点对为:({},{})({},{})最近点对距离：{}".format(PointArray[p1].x,PointArray[p1].y,PointArray[p2].x,PointArray[p2].y,d))
+
+def ReadData(testfile):
+    with open(testfile, 'r') as f1:
+        test1 = f1.read()
+        l1 = test1.split(';')
+        n = len(l1)
+        parray = []
+        for i in l1:
+            point = i.split(',')
+            parray.append(Point(point[0],point[1]))
+    return n, parray            
+
+for  i in range(1,4):
+    n,PointArray = ReadData('test%d.txt' %i)
+    '''
+    暴力法
+    minn = 10000
+    for  j  in range(n):
+        for k in range(j+1,n):
+            dist = dis(Point(PointArray[j].x,PointArray[j].y),Point(PointArray[k].x,PointArray[k].y))
+            if dist < minn:
+                minn = dist
+    print(minn)
+    '''
+
+    PointArray.sort(key=lambda p:p.x)
+    p1,p2,d=NearestPair(0,n-1)
+    print("{}文件测试的结果：最近点对为:({},{})({},{})最近点对距离：{}".format('test%d.txt' %i,PointArray[p1].x,PointArray[p1].y,PointArray[p2].x,PointArray[p2].y,d))
