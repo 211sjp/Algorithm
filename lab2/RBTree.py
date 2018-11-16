@@ -1,3 +1,7 @@
+import turtle
+t = turtle.Turtle()
+
+
 class RBTreeNode(object):
     def __init__(self, key, color='B'):
         self.key = key
@@ -9,32 +13,35 @@ class RBTreeNode(object):
 
 class RBTree(object):
     def __init__(self):
-        self.root = None
+        self.nil = RBTreeNode(0)
+        self.root = self.nil
 
 
 # 左旋算法
 def LEFT_ROTATE(T, x):
     y = x.right
     x.right = y.left
-    y.left.p = x
+    if y.left != T.nil:
+        y.left.p = x
     y.p = x.p
-    if x.p is None:
+    if x.p == T.nil:
         T.root = y
     elif x == x.p.left:
         x.p.left = y
     else:
         x.p.right = y
     y.left = x
-    x.p =y
+    x.p = y
 
 
 # 右旋算法
 def RIGHT_ROTATE(T, x):
     y = x.left
     x.left = y.right
-    y.right.p = x
+    if y.right != T.nil:
+        y.right.p = x
     y.p = x.p
-    if x.p is None:
+    if x.p== T.nil:
         T.root = y
     elif x == x.p.right:
         x.p.right = y
@@ -45,23 +52,23 @@ def RIGHT_ROTATE(T, x):
 
 
 def RBInsert(T, z):
-    y = None
+    y = T.nil
     x = T.root
-    while x is not None:
+    while x != T.nil:
         y = x
         if z.key < x.key:
             x = x.left
         else:
             x = x.right
     z.p = y
-    if y is None:
+    if y == T.nil:
         T.root = z
     elif z.key < y.key:
         y.left = z
     else:
         y.right = z
-    z.left = None
-    z.right = None
+    z.left = T.nil
+    z.right = T.nil
     z.color = 'R'
     RBInsertFixup(T, z)
 
@@ -70,7 +77,7 @@ def RBInsertFixup(T, z):
     while z.p and z.p.color == 'R':
         if z.p == z.p.p.left:              # case 1,2,3
             y = z.p.p.right
-            if y.color == 'R':                  # case 1
+            if y and y.color == 'R':                  # case 1
                 y.color = 'B'
                 z.p.color = 'B'
                 z.p.p.color = 'R'
@@ -100,16 +107,17 @@ def RBInsertFixup(T, z):
 
 
 def RBDelete(T, z):
-    if z.left is None or z.right is None:         # case 1, 2
+    if z.left == T.nil or z.right == T.nil:         # case 1, 2
         y = z       # 后面进行物理删除y
     else:
-        y = TreeSuccessor(z)        # y是z的中序后继
-    if y.left is not None:
+        y = TreeSuccessor(T, z)        # y是z的中序后继
+    if y.left != T.nil:
         x = y.left
     else:
         x = y.right
-    x.p = y.p
-    if y.p is None:        # y是根节点
+    if x:
+        x.p = y.p
+    if y.p == T.nil:        # y是根节点
         T.root = x
     else:                           # y非根
         if y == y.p.left:
@@ -172,35 +180,86 @@ def RBDeleteFixup(T, x):
 
 
 def MidOrder(x):
-    if x is not None:
+    if x.key != 0:
         MidOrder(x.left)
-        print('key:', x.key, 'x.parent:', x.p.key if x.p else 'None')
+        print('key:', x.key, 'x.parent:', x.p.key if x.p.key!=0 else 'nil')
         MidOrder(x.right)
-    
 
-def TreeSuccessor(x):
-    if x.right is None:
+
+def Locate(root, key):
+    if root.key == 0:
+        return None
+    if key == root.key:
+        return root
+    p = Locate(root.left, key)
+    if p:
+        return p
+    else:
+        return Locate(root.right, key)
+
+
+def TreeSuccessor(T, x):
+    if not x.right or x.right == T.nil:
         q = x.p
-        while q is not None and x == q.right:
+        while q and q != T.nil and x == q.right:
             x = q
             q = q.p
     else:
         q = x.right
         p = q
-        while p.left is not None:
+        while p.left and p.left != T.nil:
             q = p
             p = p.left
     return q
 
 
+def height(root):
+    if not root:
+        return -1
+    return 1 + max(height(root.left), height(root.right))
+
+
+def jump_to(x, y):
+    t.penup()
+    t.goto(x, y)
+    t.pendown()
+
+
+def draw(node, x, y, dx):
+    if node:
+        t.goto(x, y)
+        jump_to(x, y - 20)
+        t.begin_fill()
+        t.fillcolor('red' if node.color == 'R' else 'black')
+        t.circle(25)
+        t.color('white')
+        t.write(node.key if node.key != 0 else 'nil', font=("Arial",25), align="center")
+        t.color('red' if node.color == 'R' else 'black')
+        t.end_fill()
+        draw(node.left, x - dx, y - 60, dx / 2)
+        jump_to(x, y - 20)
+        draw(node.right, x + dx, y - 60, dx / 2)
+
+
 def main():
-    nodes = [11, 2, 14, 1, 7, 15, 5, 8, 4]
+    nodes = [5, 6, 15, 22, 45, 25, 21, 13, 29, 61]
     T = RBTree()
     for node in nodes:
-        RBInsert(T, RBTreeNode(node))
         print("插入数据", node)
+        RBInsert(T, RBTreeNode(node))
+        print("颜色：",Locate(T.root, node).color)
     print('中序遍历')
     MidOrder(T.root)
+    # RBDelete(T, T.root)
+    # RBDelete(T, Locate(T.root, 13))
+
+    # 画图
+    t.speed(0)
+    h = height(T.root)
+    jump_to(0, 30 * h)
+    draw(T.root, 0, 30 * h, 40 * h)
+    t.hideturtle()
+    turtle.done()
 
 
 if __name__ == '__main__':
