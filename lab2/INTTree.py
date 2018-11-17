@@ -3,27 +3,38 @@ t = turtle.Turtle()
 NIL = -10000
 
 """
-红黑树的数据结构
+区间树的数据结构
 """
 
 
-class RBTreeNode(object):
-    def __init__(self, key, color='B'):
-        self.key = key
+class interval(object):
+    def __init__(self, low, high):
+        self.low = low
+        self.high = high
+
+
+class INTTreeNode(object):
+    def __init__(self, int, color='B'):
+        self.int = int
+        self.key = int.low
         self.left = None
         self.right = None
         self.color = color
         self.p = None
+        self.max = int.high
+
+    def set_max(self):
+        self.max = max(self.int.high, self.left.max, self.right.max)
 
 
-class RBTree(object):
+class INTTree(object):
     def __init__(self):
-        self.nil = RBTreeNode(NIL)
+        self.nil = INTTreeNode(interval(NIL, NIL+1))
         self.root = self.nil
 
 
 """
-红黑树的基本操作
+区间树的基本操作
 """
 
 
@@ -42,6 +53,9 @@ def LEFT_ROTATE(T, x):
         x.p.right = y
     y.left = x
     x.p = y
+    # 区间树设置max
+    x.set_max()
+    y.set_max()
 
 
 # 右旋算法
@@ -51,7 +65,7 @@ def RIGHT_ROTATE(T, x):
     if y.right != T.nil:
         y.right.p = x
     y.p = x.p
-    if x.p== T.nil:
+    if x.p == T.nil:
         T.root = y
     elif x == x.p.right:
         x.p.right = y
@@ -59,9 +73,12 @@ def RIGHT_ROTATE(T, x):
         x.p.left = y
     y.right = x
     x.p = y
+    # 区间树设置max
+    x.set_max()
+    y.set_max()
 
 
-def RBInsert(T, z):
+def INTInsert(T, z):
     y = T.nil
     x = T.root
     while x != T.nil:
@@ -80,10 +97,10 @@ def RBInsert(T, z):
     z.left = T.nil
     z.right = T.nil
     z.color = 'R'
-    RBInsertFixup(T, z)
+    INTInsertFixup(T, z)
 
 
-def RBInsertFixup(T, z):
+def INTInsertFixup(T, z):
     while z.p and z.p.color == 'R':
         if z.p == z.p.p.left:              # case 1,2,3
             y = z.p.p.right
@@ -116,7 +133,7 @@ def RBInsertFixup(T, z):
     T.root.color = 'B'
 
 
-def RBDelete(T, z):
+def INTDelete(T, z):
     if z.left == T.nil or z.right == T.nil:         # case 1, 2
         y = z       # 后面进行物理删除y
     else:
@@ -138,11 +155,11 @@ def RBDelete(T, z):
         z.key = y.key
         z.color = y.color
     if y.color == 'B':
-        RBDeleteFixup(T, x)
+        INTDeleteFixup(T, x)
     return y
 
 
-def RBDeleteFixup(T, x):
+def INTDeleteFixup(T, x):
     while x != T.root and x.color == 'B':
         if x == x.p.left:
             w = x.p.right
@@ -189,6 +206,16 @@ def RBDeleteFixup(T, x):
     x.color = 'B'
 
 
+def INTSearch(T, i):
+    x = T.root
+    while x != T.nil and i.low >= x.int.high or i.high <= x.int.low:
+        if x.left != T.nil and x.left.max >= i.low:
+            x = x.left
+        else:
+            x = x.right
+    return x
+
+
 """
 辅助函数
 """
@@ -197,7 +224,7 @@ def RBDeleteFixup(T, x):
 def MidOrder(x):
     if x.key != NIL:
         MidOrder(x.left)
-        print('key:', x.key, 'x.parent:', x.p.key if x.p.key!=NIL else 'nil')
+        print('key:', x.key, 'x.parent:', x.p.key if x.p.key != NIL else 'nil')
         MidOrder(x.right)
 
 
@@ -252,10 +279,10 @@ def draw(node, x, y, dx):
         t.begin_fill()
         t.fillcolor('red' if node.color == 'R' else 'black')
         t.circle(25)
-        t.color('white')
-        t.write(node.key if node.key != NIL else 'nil', font=("Arial",25), align="center")
-        t.color('red' if node.color == 'R' else 'black')
         t.end_fill()
+        t.color('green')
+        t.write("[{},{}]/{}".format(node.int.low, node.int.high, node.max) if node.key != NIL else 'nil', font=("Arial", 15), align="center")
+        t.color('red' if node.color == 'R' else 'black')
         draw(node.left, x - dx, y - 60, dx / 2)
         jump_to(x, y - 20)
         draw(node.right, x + dx, y - 60, dx / 2)
@@ -267,16 +294,22 @@ def draw(node, x, y, dx):
 
 
 def main():
-    nodes = [1, 6, 11, 8, 13, 25, 17, 15, 22, 67]
-    T = RBTree()
+    nodes = [interval(5, 8), interval(15, 22), interval(16, 25), interval(13, 21), interval(29, 61)]
+    T = INTTree()
     for node in nodes:
         print("插入数据", node)
-        RBInsert(T, RBTreeNode(node))
-        print("颜色：",Locate(T.root, node).color)
+        INTInsert(T, INTTreeNode(node))
+        print("颜色：", Locate(T.root, node.low).color)
     print('中序遍历')
     MidOrder(T.root)
-    # RBDelete(T, T.root)
-    # RBDelete(T, Locate(T.root, 13))
+    # INTDelete(T, T.root)
+    # INTDelete(T, Locate(T.root, 13))
+    result = INTSearch(T, interval(3, 9))
+    if result != T.nil:
+        print("找到的区间为：[", result.int.low, ",", result.int.high, ']')
+    else:
+        print("没有重叠区间！")
+
 
     # 画图
     t.speed(0)
