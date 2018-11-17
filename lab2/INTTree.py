@@ -33,6 +33,8 @@ class INTTree(object):
         self.root = self.nil
 
 
+T = INTTree()
+
 """
 区间树的基本操作
 """
@@ -134,29 +136,30 @@ def INTInsertFixup(T, z):
 
 
 def INTDelete(T, z):
-    if z.left == T.nil or z.right == T.nil:         # case 1, 2
-        y = z       # 后面进行物理删除y
+    y = z
+    y_original_color = y.color
+    if z.left == T.nil:
+        x = z.right
+        RBTransplant(T, z, z.right)
+    elif z.right == T.nil:
+        x = z.left
+        RBTransplant(T, z, z.left)
     else:
-        y = TreeSuccessor(T, z)        # y是z的中序后继
-    if y.left != T.nil:
-        x = y.left
-    else:
+        y = TreeMinimum(z.right)
+        y_original_color = y.color
         x = y.right
-    if x:
-        x.p = y.p
-    if y.p == T.nil:        # y是根节点
-        T.root = x
-    else:                           # y非根
-        if y == y.p.left:
-            y.p.left = x
+        if y.p == z:
+            x.p = y
         else:
-            y.p.right = x
-    if y != z:             # case 3
-        z.key = y.key
-        z.color = y.color
-    if y.color == 'B':
+            RBTransplant(T, y, y.right)
+            y.right = z.right
+            y.right.p = y
+        RBTransplant(T, z, y)
+        y.left = z.left
+        y.left.p = y
+        y.color = z.color
+    if y_original_color == 'B':
         INTDeleteFixup(T, x)
-    return y
 
 
 def INTDeleteFixup(T, x):
@@ -224,7 +227,7 @@ def INTSearch(T, i):
 def MidOrder(x):
     if x.key != NIL:
         MidOrder(x.left)
-        print('key:', x.key, 'x.parent:', x.p.key if x.p.key != NIL else 'nil')
+        print('interval:[{},{}]'.format(x.int.low, x.int.high), 'x.parent:', '[{},{}]'.format(x.p.int.low, x.p.int.high) if x.p != T.nil else 'nil')
         MidOrder(x.right)
 
 
@@ -240,19 +243,20 @@ def Locate(root, key):
         return Locate(root.right, key)
 
 
-def TreeSuccessor(T, x):
-    if not x.right or x.right == T.nil:
-        q = x.p
-        while q and q != T.nil and x == q.right:
-            x = q
-            q = q.p
+def RBTransplant( T, u, v):
+    if u.p == T.nil:
+        T.root = v
+    elif u == u.p.left:
+        u.p.left = v
     else:
-        q = x.right
-        p = q
-        while p.left and p.left != T.nil:
-            q = p
-            p = p.left
-    return q
+        u.p.right = v
+    v.p = u.p
+
+
+def TreeMinimum(x):
+    while x.left != T.nil:
+        x = x.left
+    return x
 
 
 """
@@ -295,9 +299,8 @@ def draw(node, x, y, dx):
 
 def main():
     nodes = [interval(5, 8), interval(15, 22), interval(16, 25), interval(13, 21), interval(29, 61)]
-    T = INTTree()
     for node in nodes:
-        print("插入数据", node)
+        print("插入数据[{},{}]".format(node.low, node.high))
         INTInsert(T, INTTreeNode(node))
         print("颜色：", Locate(T.root, node.low).color)
     print('中序遍历')
