@@ -10,9 +10,9 @@ def LCS_LENGTH(X, Y):
                 b[i][j] = 'LEFT-UP'
             elif c[i - 1][j] >= c[i][j - 1]:
                 c[i][j] = c[i - 1][j]
+                c[i][j] = c[i][j - 1]
                 b[i][j] = 'UP'
             else:
-                c[i][j] = c[i][j - 1]
                 b[i][j] = 'LEFT'
     return c, b
 
@@ -31,7 +31,8 @@ def PRINT_LCS(b, X, i, j):
 
 
 def main():
-    with open('test.txt', 'r') as file:
+    with open('test.txt', 'r'
+              ) as file:
         test = file.read()
         print(test)
     Data = test.split()
